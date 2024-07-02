@@ -9,6 +9,6 @@ char **createKeys(int size);
 
 int analyzeRawText(char *rawText);
 
-void decipher(char *cipherText);
+char decipher(char *cipherText);
 
 #endif

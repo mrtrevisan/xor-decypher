@@ -75,7 +75,7 @@ int analyzeRawText(char *rawText)
     return count;
 }
 
-void decipher(char *cipherText)
+char decipher(char *cipherText)
 {
     int len = strlen(cipherText);
 
@@ -116,8 +116,8 @@ void decipher(char *cipherText)
 
     if (bestRawText)
     {
-        printf("Key: %c\n", bestKey);
-        printf("Raw Text: %s\n", bestRawText);
         free(bestRawText);
     }
+
+    return bestKey;
 }
