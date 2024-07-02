@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -g
 
 # Nome do executável final
-TARGET = out/out.exe
+TARGET = out/a.out
 
 # Diretório de origem
 SRC_DIR = src
