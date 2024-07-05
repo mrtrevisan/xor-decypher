@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "utils.h"
 #include "lib.h"
 
@@ -68,7 +69,8 @@ float scoreRawText(const char *plaintext, int len) {
 
     float score = 0.0;
     for (int i = 0; i < len; ++i) {
-        score += frequencies[(int)plaintext[i]];
+        unsigned char c = plaintext[i];
+        score += frequencies[c];
     }
     return score;
 }
@@ -78,56 +80,55 @@ void analyzeRawText(char* rawText, char key, float* bestScores, char* bestKeys)
     int len = strlen(rawText);
     float score = scoreRawText(rawText, len);
     
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 26; i++)
     {
         if (score > bestScores[i])
         {
-            for (int j = 4; j > i; j--)
+            for (int j = 25; j > i; j--)
             {
                 bestScores[j] = bestScores[j - 1];
                 bestKeys[j] = bestKeys[j - 1];
             }
             bestScores[i] = score;
-            bestKeys[i] = key;
+            bestKeys[i] = key;   
+            //printf("bestkeys: %s adicionando %c\n", bestKeys, key);   
             break;
         }
     }
 }
+
 
 char* decipher(char *cipherText)
 {
     int len = strlen(cipherText);
     char **keys = createKeys(len);
 
-    char* bestKeys = (char*)malloc(5 * sizeof(char) + 1);    
-    float bestScores[5] = {-1, -1, -1, -1, -1};
+    char* bestKeys = (char*)malloc(26 * sizeof(char) + 1);    
+    float bestScores[26] = {-1, -1, -1, -1, -1};
 
-    for(int i=0; i<5; i++) {
+    for(int i=0; i<26; i++) {
         bestKeys[i] = 'a';
     }
-    bestKeys[5] = '\0';
+    bestKeys[26] = '\0';
 
     for (int i = 0; i < 26; i++)
     {
+        char* hex_text = base64_to_hex(cipherText);
         char *key = hex_encode(keys[i]);
-        char *res = xorHexStrings(cipherText, key);
+        char *res = xorHexStrings(hex_text, key);
 
         if (res)
         {
             char *rawText = hex_decode(res);
 
-            // if(keys[i][0] == 'Y')
-            //     printf("%s\n", rawText);
-
-            // if(keys[i][0] == 'U')
-            //     printf("%s\n", rawText);
-
             analyzeRawText(rawText, keys[i][0], bestScores, bestKeys);
 
             free(rawText);
             free(res);
-            free(key);
         }
+        
+        free(key);
+        free(hex_text);
     }
 
     for (int i = 0; i < 26; i++)

@@ -107,6 +107,7 @@ char *hex_encode(const char *input)
     {
         sprintf(output + (i * 2), "%02x", (unsigned char)input[i]);
     }
+    output[length*2] = '\0';
 
     return output;
 }

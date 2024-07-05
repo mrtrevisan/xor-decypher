@@ -7,7 +7,7 @@
 #include "lib.h"
 
 #define MIN_KEYSIZE 2
-#define MAX_KEYSIZE 40
+#define MAX_KEYSIZE 10
 
 int get_best_keysize(char* cipherText)
 {
@@ -18,11 +18,12 @@ int get_best_keysize(char* cipherText)
     {
         char* str1 = malloc(keysize * sizeof(char) + 1);
         strncpy(str1, cipherText, keysize);
+        str1[keysize] = '\0';
 
         char* str2 = malloc(keysize * sizeof(char) + 1);
         strncpy(str2, cipherText + keysize, keysize);
+        str2[keysize] = '\0';
 
-        // printf("str1 : %s | str2 : %s\n", str1, str2);
         int hamming = hamming_distance(str1, str2);
 
         double normalized_hamming_distance = (double)hamming / (double)keysize;
@@ -32,8 +33,6 @@ int get_best_keysize(char* cipherText)
             bestNormalized = normalized_hamming_distance;
             bestKeysize = keysize;
         }
-        
-        // printf("Resultado do hamming normalizado: %f\n", normalized_hamming_distance);
 
         free(str1);
         free(str2);
@@ -63,7 +62,6 @@ char** transpose_blocks(char* cipherText, int keySize) {
         int byteIndex = i % keySize;
         transposed[byteIndex][blockIndex] = cipherText[i];
     }
-
     return transposed;
 }
 
@@ -77,9 +75,9 @@ int main()
     for (int i = 0; i < bestKeySize; i++)
     {
         //atacar bloco
-        char* hex_transposed = base64_to_hex(transposed[i]);
-        char* best_keys = decipher(hex_transposed);
+        char* best_keys = decipher(transposed[i]);
         printf("Melhor chave para o bloco %d: %s\n", i, best_keys);
+        free(best_keys);
     }
 
     for (int i = 0; i < bestKeySize; i++) {
