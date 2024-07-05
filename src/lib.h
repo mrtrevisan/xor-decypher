@@ -7,8 +7,8 @@ void createArray(char *array, char c, int size);
 
 char **createKeys(int size);
 
-int analyzeRawText(char *rawText);
+void analyzeRawText(char* rawText, char key, float* bestScores, char* bestKeys);
 
-char decipher(char *cipherText);
+char* decipher(char *cipherText);
 
 #endif

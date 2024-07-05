@@ -99,7 +99,7 @@ char *base64_decode(const char *input)
 char *hex_encode(const char *input)
 {
     size_t length = strlen(input);
-    char *output = (char *)malloc(length * 2 + 1);
+    char *output = (char *)malloc(length * 2 + 1); // Espaço para string hexadecimal + '\0'
     if (!output)
         return NULL;
 
@@ -114,9 +114,9 @@ char *hex_encode(const char *input)
 char *hex_decode(const char *input)
 {
     int length = strlen(input);
-    int output_length = (length + 1) / 2;
+    int output_length = (length + 1) / 2; // Espaço para os bytes decodificados
 
-    char *output = (char *)malloc(output_length + 1);
+    char *output = (char *)malloc(output_length + 1); // Espaço para os bytes decodificados + '\0'
     if (!output)
         return NULL;
 
@@ -126,12 +126,13 @@ char *hex_decode(const char *input)
         sscanf(input + i, "%2hhx", &output[i / 2]);
     }
 
+    // Se o comprimento for ímpar, trate o último caractere hexadecimal sozinho
     if (length % 2 != 0)
     {
         sscanf(input + i, "%1hhx", &output[i / 2]);
     }
 
-    output[output_length] = '\0';
+    output[output_length] = '\0'; // Adiciona o terminador nulo
 
     return output;
 }
@@ -168,6 +169,7 @@ char *hex_to_base64(const char *hex_string)
     return base64_string;
 }
 
+// Função para aplicar XOR em duas strings hexadecimais de mesmo tamanho
 char *xorHexStrings(const char *plainText, const char *key)
 {
     size_t len = strlen(plainText) / 2;
@@ -175,9 +177,11 @@ char *xorHexStrings(const char *plainText, const char *key)
     char *keyBytes;
     char *cypherTextBytes = (char *)malloc(len * sizeof(char) + 1);
 
+    // Converte as strings hexadecimais para arrays de bytes
     plainTextBytes = hex_decode(plainText);
     keyBytes = hex_decode(key);
 
+    // Aplica XOR byte a byte
     for (size_t i = 0; i < len; i++)
     {
         cypherTextBytes[i] = plainTextBytes[i] ^ keyBytes[i];
@@ -185,44 +189,15 @@ char *xorHexStrings(const char *plainText, const char *key)
 
     cypherTextBytes[len] = '\0';
 
+    // Converte o resultado de volta para uma string hexadecimal
     char *cypherText = hex_encode(cypherTextBytes);
 
+    // Libera a memória alocada
     free(plainTextBytes);
     free(keyBytes);
     free(cypherTextBytes);
 
     return cypherText;
-}
-
-char* read_file_to_string(const char* filename) {
-    
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        return NULL;
-    }
-
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);  
-
-    char* content = malloc(file_size + 1);  
-    if (content == NULL) {
-        fclose(file);
-        return NULL;
-    }
-
-    size_t read_size = fread(content, 1, file_size, file);
-    if (read_size != file_size) {
-        free(content);
-        fclose(file);
-        return NULL;
-    }
-
-    content[file_size] = '\0';
-
-    fclose(file);
-
-    return content;
 }
 
 int count_different_bits(char c1, char c2) {

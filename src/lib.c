@@ -1,39 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "utils.h"
 #include "lib.h"
-
-void string_convert(int mode)
-{
-    if (mode == 1)
-    {
-        const char *base64_string = "QWNvcmRhUGVkcmluaG9RdWVob2pldGVtY2FtcGVvbmF0bw==";
-        char *hex_string = base64_to_hex(base64_string);
-
-        if (hex_string)
-        {
-            printf("Base64: %s\n", base64_string);
-            printf("Hexadecimal: %s\n", hex_string);
-            free(hex_string);
-        }
-    }
-    else
-    {
-        const char *hex_string = "41636f72646150656472696e686f517565686f6a6574656d63616d70656f6e61746f";
-        char *base64_string = hex_to_base64(hex_string);
-
-        if (base64_string)
-        {
-            printf("Hexadecimal: %s\n", hex_string);
-            printf("Base64: %s\n", base64_string);
-            free(base64_string);
-        }
-    }
-
-    return;
-}
 
 void createArray(char *array, char c, int size)
 {
@@ -58,7 +27,7 @@ char **createKeys(int size)
 }
 
 // digraph
-int digraph_analyze(char *rawText)
+int countDigraphs(char *rawText)
 {
     int len = strlen(rawText);
     int count = 0;
@@ -76,65 +45,67 @@ int digraph_analyze(char *rawText)
     return count;
 }
 
-double calculate_score(const char *text) {
-    double portuguese_freq[26] = {
-        14.63, // A
-        1.04,  // B
-        3.88,  // C
-        4.99,  // D
-        12.57, // E
-        1.02,  // F
-        1.30,  // G
-        1.28,  // H
-        6.18,  // I
-        0.40,  // J
-        0.02,  // K (not typically used in Portuguese words, very low frequency)
-        2.78,  // L
-        4.74,  // M
-        5.05,  // N
-        10.73, // O
-        2.52,  // P
-        1.20,  // Q
-        6.53,  // R
-        7.81,  // S
-        4.34,  // T
-        4.63,  // U
-        1.67,  // V
-        0.01,  // W (not typically used in Portuguese words, very low frequency)
-        0.21,  // X
-        0.01,  // Y (not typically used in Portuguese words, very low frequency)
-        0.47   // Z
-    };
-    int letter_count[26] = {0};
-    int total_letters = 0;
+float scoreRawText(const char *plaintext, int len) {
+    float frequencies[256] = {0};
+    frequencies['A'] = 14.63; frequencies['B'] = 1.04; frequencies['C'] = 3.88;
+    frequencies['D'] = 4.99; frequencies['E'] = 12.57; frequencies['F'] = 1.02;
+    frequencies['G'] = 1.30; frequencies['H'] = 1.28; frequencies['I'] = 6.18;
+    frequencies['J'] = 0.40; frequencies['K'] = 0.02; frequencies['L'] = 2.78;
+    frequencies['M'] = 4.74; frequencies['N'] = 5.05; frequencies['O'] = 10.73;
+    frequencies['P'] = 2.52; frequencies['Q'] = 1.20; frequencies['R'] = 6.53;
+    frequencies['S'] = 7.81; frequencies['T'] = 4.34; frequencies['U'] = 4.63;
+    frequencies['V'] = 1.67; frequencies['W'] = 0.01; frequencies['X'] = 0.21;
+    frequencies['Y'] = 0.01; frequencies['Z'] = 0.47;
+    frequencies['a'] = 14.63; frequencies['b'] = 1.04; frequencies['c'] = 3.88;
+    frequencies['d'] = 4.99; frequencies['e'] = 12.57; frequencies['f'] = 1.02;
+    frequencies['g'] = 1.30; frequencies['h'] = 1.28; frequencies['i'] = 6.18;
+    frequencies['j'] = 0.40; frequencies['k'] = 0.02; frequencies['l'] = 2.78;
+    frequencies['m'] = 4.74; frequencies['n'] = 5.05; frequencies['o'] = 10.73;
+    frequencies['p'] = 2.52; frequencies['q'] = 1.20; frequencies['r'] = 6.53;
+    frequencies['s'] = 7.81; frequencies['t'] = 4.34; frequencies['u'] = 4.63;
+    frequencies['v'] = 1.67; frequencies['w'] = 0.01; frequencies['x'] = 0.21;
+    frequencies['y'] = 0.01; frequencies['z'] = 0.47;
 
-    // Count the frequency of each letter in the decoded text
-    for (size_t i = 0; text[i] != '\0'; i++) {
-        if (isalpha(text[i])) {
-            letter_count[toupper(text[i]) - 'A']++;
-            total_letters++;
-        }
+    float score = 0.0;
+    for (int i = 0; i < len; ++i) {
+        score += frequencies[(int)plaintext[i]];
     }
-
-    // Calculate the score based on the difference from the English frequency table
-    double score = 0.0;
-    for (int i = 0; i < 26; i++) {
-        double observed_freq = (double)letter_count[i] / total_letters * 100;
-        score += (observed_freq - portuguese_freq[i]) * (observed_freq - portuguese_freq[i]);
-    }
-
     return score;
 }
 
-char decipher(char *cipherText)
+void analyzeRawText(char* rawText, char key, float* bestScores, char* bestKeys)
+{
+    int len = strlen(rawText);
+    float score = scoreRawText(rawText, len);
+    
+    for (int i = 0; i < 5; i++)
+    {
+        if (score > bestScores[i])
+        {
+            for (int j = 4; j > i; j--)
+            {
+                bestScores[j] = bestScores[j - 1];
+                bestKeys[j] = bestKeys[j - 1];
+            }
+            bestScores[i] = score;
+            bestKeys[i] = key;
+            break;
+        }
+    }
+}
+
+char* decipher(char *cipherText)
 {
     int len = strlen(cipherText);
-
     char **keys = createKeys(len);
 
-    char *bestRawText = (char *)malloc(len * sizeof(char) + 1);
-    char bestKey = 'a';
-    int bestCount = -1;
+    char* bestKeys = (char*)malloc(5 * sizeof(char) + 1);    
+    float bestScores[5] = {-1, -1, -1, -1, -1};
+
+    for(int i=0; i<5; i++) {
+        bestKeys[i] = 'a';
+    }
+    bestKeys[5] = '\0';
 
     for (int i = 0; i < 26; i++)
     {
@@ -144,15 +115,14 @@ char decipher(char *cipherText)
         if (res)
         {
             char *rawText = hex_decode(res);
-            //int count = analyzeRawText(rawText);
-            int count = calculate_score(rawText);
 
-            if (count > bestCount)
-            {
-                bestCount = count;
-                strcpy(bestRawText, rawText);
-                bestKey = keys[i][0];
-            }
+            // if(keys[i][0] == 'Y')
+            //     printf("%s\n", rawText);
+
+            // if(keys[i][0] == 'U')
+            //     printf("%s\n", rawText);
+
+            analyzeRawText(rawText, keys[i][0], bestScores, bestKeys);
 
             free(rawText);
             free(res);
@@ -164,12 +134,7 @@ char decipher(char *cipherText)
     {
         free(keys[i]);
     }
-    free(keys);
-
-    if (bestRawText)
-    {
-        free(bestRawText);
-    }
-
-    return bestKey;
+    free(keys);  
+    
+    return bestKeys;
 }

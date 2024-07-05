@@ -15,8 +15,6 @@ char* hex_to_base64(const char *hex_string);
 
 char* xorHexStrings(const char *plainText, const char *key);
 
-char* read_file_to_string(const char* filename);
-
 int hamming_distance(const char* str1, const char* str2);
 
 #endif
